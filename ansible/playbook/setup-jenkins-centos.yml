@@ -8,7 +8,7 @@
     - name: Remove Java7
       yum: name=java7 state=removed
     - name: Install Java 8
-      yum: name=java-1.8.0-openjdk-devel.x86_64 state=installed
+      apt: name=java-1.8.0-openjdk-devel.x86_64 state=installed
     become: yes
   
   - name: Install git
@@ -30,14 +30,18 @@
   - name: Install and Run Jenkins
     become: yes
     block:
-    - name: get Jenkins repo
-      command: 'wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat/jenkins.repo'
-    - name: rpm imoort
-      command: 'rpm --import https://jenkins-ci.org/redhat/jenkins-ci.org.key'
-    - name: install jenkins
-      yum: name=jenkins state=installed
-    - name: Run Jenkins
-      command: service jenkins start
+    - name: ensure the jenkins apt repository key is installed
+      apt_key: url=https://pkg.jenkins.io/debian-stable/jenkins.io.key state=present
+
+    - name: ensure the repository is configured
+      apt_repository: repo='deb https://pkg.jenkins.io/debian-stable binary/' state=present
+
+    - name: ensure jenkins is installed
+      apt: name=jenkins update_cache=yes
+
+    - name: ensure jenkins is running
+      service: name=jenkins state=started
+      
     - name: read the password file
       shell: cat /var/lib/jenkins/secrets/initialAdminPassword
       register: password

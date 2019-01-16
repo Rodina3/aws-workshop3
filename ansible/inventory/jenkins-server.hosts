@@ -2,12 +2,6 @@
 [all:vars]
 ansible_ssh_common_args = '-o StrictHostKeyChecking=no'
 
-[jenkins-server:vars]
-ansible_user = ec2-user
-
 ############ Hosts ############
 [jenkins-server]
-jenkins-server-1 ansible_host=13.251.16.158
-
-# [web:vars]
-# ansible_ssh_key_file = "~/.ssh/web_rsa"
+jenkins-server-1 ansible_host=13.251.89.200
