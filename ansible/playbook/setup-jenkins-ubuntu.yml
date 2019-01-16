@@ -2,40 +2,60 @@
 - hosts: jenkins-server
   remote_user: ubuntu
   gather_facts: no
-
-  tasks:
-  - name: Install Java 8
-    apt: name=java-1.8.0-openjdk-devel.x86_64 state=installed
-    become: yes
-
-  - name: install pip
+  become: yes
+  
+  tasks: 
+  - name: install pip3
     apt:
-      name: python-pip
+      name: python3-pip
       state: present
   
   - name: Install ansible and boto and boto3
-    command: pip install ansible boto boto3
-    become: yes
+    command: pip3 install ansible boto boto3
+    
+
+  - name: install openjdk8
+    apt:
+      name: software-properties-common
+      state: present
+
+  - name: add java repository
+    command: add-apt-repository --yes ppa:webupd8team/java
+
+  - name: apt update
+    apt: 
+      update_cache: yes
+
+  - name: install jdk8
+    apt:
+      name: oracle-java8-installer
+      state: present
   
-  - name: Create /apps directory
-    file:
-      state: directory
-      path: /apps
-      owner: jenkins
-      group: jenkins
-    become: yes
+  # - name: Create /apps directory
+  #   file:
+  #     state: directory
+  #     path: /apps
+  #     owner: jenkins
+  #     group: jenkins
+  #   become: yes
 
   - name: Install and Run Jenkins
-    become: yes
     block:
-    - name: get Jenkins repo
-      command: 'wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat/jenkins.repo'
-    - name: rpm imoort
-      command: 'rpm --import https://jenkins-ci.org/redhat/jenkins-ci.org.key'
+    # - name: ensure the jenkins apt repository key is installed
+    #   apt_key: url=https://pkg.jenkins.io/debian-stable/jenkins.io.key state=present
+
+    # - name: ensure the repository is configured
+    #   apt_repository: repo='deb https://pkg.jenkins.io/debian-stable binary/' state=present
+
+    # - name: ensure jenkins is installed
+    #   apt: name=jenkins update_cache=yes
+
     - name: install jenkins
-      yum: name=jenkins state=installed
-    - name: Run Jenkins
-      command: service jenkins start
+      command: ansible-galaxy install geerlingguy.jenkins
+
+    - name: ensure jenkins is running
+      service: name=jenkins state=started
+    
     - name: read the password file
       shell: cat /var/lib/jenkins/secrets/initialAdminPassword
       register: password
