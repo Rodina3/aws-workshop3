@@ -1,0 +1,3 @@
+*.retry
+/jenkins/jenkins_home
+/jenkins/app

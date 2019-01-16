@@ -1,0 +1,6 @@
+---
+inst_type: t2.micro
+inst_region: ap-southeast-1
+inst_image: ami-05b3bcf7f311194b3
+inst_group: sg-00a5262f28b098bff
+inst_subnet: subnet-6b02ce32

@@ -1,0 +1,50 @@
+---
+- hosts: jenkins-server
+  gather_facts: no
+
+  tasks:
+  - name: Remove Java 7 and Install Java 8
+    block:
+    - name: Remove Java7
+      yum: name=java7 state=removed
+    - name: Install Java 8
+      yum: name=java-1.8.0-openjdk-devel.x86_64 state=installed
+    become: yes
+  
+  - name: Install git
+    yum: name=git state=installed
+    become: yes
+  
+  - name: Install ansible and boto and boto3
+    command: pip install ansible boto boto3
+    become: yes
+  
+  - name: Create /apps directory
+    file:
+      state: directory
+      path: /apps
+      owner: "{{ansible_user}}"
+      group: "{{ansible_user}}"
+    become: yes
+
+  - name: Install and Run Jenkins
+    become: yes
+    block:
+    - name: get Jenkins repo
+      command: 'wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat/jenkins.repo'
+    - name: rpm imoort
+      command: 'rpm --import https://jenkins-ci.org/redhat/jenkins-ci.org.key'
+    - name: install jenkins
+      yum: name=jenkins state=installed
+    - name: Run Jenkins
+      command: service jenkins start
+    - name: read the password file
+      shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+      register: password
+    - debug: msg="Jenkins Administrator password is {{password.stdout_lines}}"
+
+  - name: Copy ssh to jenkins
+    copy:
+      src: "{{ssh_key}}"
+      dest: ~/.ssh/id_rsa
+      mode: 0400
