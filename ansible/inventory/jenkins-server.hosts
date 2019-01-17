@@ -4,4 +4,4 @@ ansible_ssh_common_args = '-o StrictHostKeyChecking=no'
 
 ############ Hosts ############
 [jenkins-server]
-jenkins-server-1 ansible_host=13.251.89.200 ansible_python_interpreter=/usr/bin/python3
+jenkins-server-1 ansible_host=3.0.209.24 ansible_python_interpreter=/usr/bin/python3

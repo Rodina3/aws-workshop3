@@ -1,10 +1,14 @@
 ---
 - hosts: jenkins-server
   remote_user: ubuntu
-  gather_facts: no
+  gather_facts: yes
   become: yes
   
   tasks: 
+  - name: apt update
+    apt: 
+      update_cache: yes
+
   - name: install pip3
     apt:
       name: python3-pip
@@ -14,44 +18,38 @@
     command: pip3 install ansible boto boto3
     
 
-  - name: install openjdk8
-    apt:
-      name: software-properties-common
-      state: present
+  # # - name: install openjdk8
+  # #   apt:
+  # #     name: software-properties-common
+  # #     state: present
 
-  - name: add java repository
-    command: add-apt-repository --yes ppa:webupd8team/java
+  # # - name: add java repository
+  # #   command: add-apt-repository --yes ppa:webupd8team/java
 
-  - name: apt update
-    apt: 
-      update_cache: yes
+  # # - name: apt update
+  # #   apt: 
+  # #     update_cache: yes
+
+  # # - name: accept license
+  # #   debconf:
+  # #     name: "oracle-java8-installer"
+  # #     question: "shared/accepted-oracle-license-v1-1"
+  # #     value: "true"
+  # #     vtype: "select"
 
   - name: install jdk8
     apt:
-      name: oracle-java8-installer
+      name: openjdk-8-jdk
       state: present
-  
-  # - name: Create /apps directory
-  #   file:
-  #     state: directory
-  #     path: /apps
-  #     owner: jenkins
-  #     group: jenkins
-  #   become: yes
 
-  - name: Install and Run Jenkins
-    block:
-    # - name: ensure the jenkins apt repository key is installed
-    #   apt_key: url=https://pkg.jenkins.io/debian-stable/jenkins.io.key state=present
+    - name: ensure the jenkins apt repository key is installed
+      apt_key: url=https://pkg.jenkins.io/debian-stable/jenkins.io.key state=present
 
-    # - name: ensure the repository is configured
-    #   apt_repository: repo='deb https://pkg.jenkins.io/debian-stable binary/' state=present
+    - name: ensure the repository is configured
+      apt_repository: repo='deb https://pkg.jenkins.io/debian-stable binary/' state=present
 
-    # - name: ensure jenkins is installed
-    #   apt: name=jenkins update_cache=yes
-
-    - name: install jenkins
-      command: ansible-galaxy install geerlingguy.jenkins
+    - name: ensure jenkins is installed
+      apt: name=jenkins update_cache=yes
 
     - name: ensure jenkins is running
       service: name=jenkins state=started
@@ -60,3 +58,22 @@
       shell: cat /var/lib/jenkins/secrets/initialAdminPassword
       register: password
     - debug: msg="Jenkins Administrator password is {{password.stdout_lines}}"
+
+    - name: Add Docker GPG key
+      apt_key: url=https://download.docker.com/linux/ubuntu/gpg
+
+    - name: Add Docker APT repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ansible_distribution_release}} stable
+
+    - name: Install list of packages
+      apt:
+        name: ['apt-transport-https','ca-certificates','curl','software-properties-common','docker-ce']
+        state: present
+        update_cache: yes
+
+    - name: add jenkins to docker group
+      command: usermod -a -G docker jenkins
+
+    - name: ensure jenkins is running
+      service: name=jenkins state=restarted
