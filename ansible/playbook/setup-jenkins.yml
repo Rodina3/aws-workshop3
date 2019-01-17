@@ -30,18 +30,28 @@
   - name: Install and Run Jenkins
     become: yes
     block:
-    - name: get Jenkins repo
-      command: 'wget -O /etc/yum.repos.d/jenkins.repo http://pkg.jenkins-ci.org/redhat/jenkins.repo'
-    - name: rpm imoort
-      command: 'rpm --import https://jenkins-ci.org/redhat/jenkins-ci.org.key'
+    - name: get jenkins repo
+      get_url:
+        url: http://pkg.jenkins-ci.org/redhat/jenkins.repo
+        dest: /etc/yum.repos.d/jenkins.repo
+    - name: import repo key 
+      rpm_key:
+        state: present
+        key: https://jenkins-ci.org/redhat/jenkins-ci.org.key
     - name: install jenkins
       yum: name=jenkins state=installed
-    - name: Run Jenkins
-      command: service jenkins start
+    - name: start service jenkins
+      service:
+        name: jenkins
+        state: started
     - name: read the password file
       shell: cat /var/lib/jenkins/secrets/initialAdminPassword
       register: password
-    - debug: msg="Jenkins Administrator password is {{password.stdout_lines}}"
+      become: yes
+    - debug:
+        msg:
+        - "Jenkins Administrator password: {{password.stdout_lines | replace('[u','') | replace(']','')}}"
+        - "Jenkins URL: {{ansible_host}}:8080"
 
   - name: Copy ssh to jenkins
     copy:
