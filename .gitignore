@@ -1,3 +1,6 @@
 *.retry
 /jenkins/jenkins_home
 /jenkins/app
+
+.DS_Store
+*.zip
