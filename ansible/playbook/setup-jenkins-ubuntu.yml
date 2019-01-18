@@ -54,8 +54,10 @@
   - name: read the password file
     shell: cat /var/lib/jenkins/secrets/initialAdminPassword
     register: password
-  - debug: msg="Jenkins Administrator password is {{password.stdout_lines}}"
-
+  - debug:
+        msg:
+        - "Jenkins Administrator password: {{password.stdout_lines | replace('[u','') | replace(']','')}}"
+        - "Jenkins URL: {{ansible_host}}:8080"
   - name: Add Docker GPG key
     apt_key: url=https://download.docker.com/linux/ubuntu/gpg
 
