@@ -18,7 +18,11 @@
   - name: Install ansible and boto and boto3
     command: pip install ansible boto boto3
     become: yes
-  
+ 
+  - name: install docker
+    yum: name=docker state=installed
+    become: yes
+
   - name: Create /apps directory
     file:
       state: directory
@@ -26,9 +30,8 @@
       owner: "{{ansible_user}}"
       group: "{{ansible_user}}"
     become: yes
-
+  
   - name: Install and Run Jenkins
-    become: yes
     block:
     - name: get jenkins repo
       get_url:
@@ -40,21 +43,36 @@
         key: https://jenkins-ci.org/redhat/jenkins-ci.org.key
     - name: install jenkins
       yum: name=jenkins state=installed
+    - name: add jenkins to group
+      command: usermod -a -G docker jenkins
+    - name : source bash profiles
+      shell: source ~/.bashrc
+      args:
+        executable: /bin/bash
+    - name: run docker
+      service:
+        name: docker
+        state: started
     - name: start service jenkins
       service:
         name: jenkins
         state: started
+    - pause: seconds=20
     - name: read the password file
       shell: cat /var/lib/jenkins/secrets/initialAdminPassword
       register: password
-      become: yes
     - debug:
         msg:
         - "Jenkins Administrator password: {{password.stdout_lines | replace('[u','') | replace(']','')}}"
         - "Jenkins URL: {{ansible_host}}:8080"
+    become: yes
 
   - name: Copy ssh to jenkins
     copy:
       src: "{{ssh_key}}"
       dest: ~/.ssh/id_rsa
       mode: 0400
+
+
+
+# node environment config: PATH:
